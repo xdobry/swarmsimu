@@ -1,0 +1,128 @@
+Docu Farben
+- swarm: green
+- crowded: red
+- annexation: blue
+- see: yellow
+- collision: magenta
+- default: black
+
+
+Elemente haben
+- position
+- bewegung vector
+- bewegungs rotation
+
+Elemente erkennen nachbar (haben bestimmte sichtweise)
+- übernehmen die Parameter von nachbar
+- Wenn die Parameter stimmen erhöhen die Geschwindigkeit
+- Die Nachbar die näher sind, sind auch wichtiger
+- Die Nachbar die schneller sind sind auch wichtiger
+- Vermeidung der Kollisionen mit Nachbar
+  - Abbremsen
+  - Richtung Anpassen
+- Vermeidung der Kollisionen mit Rand
+  - Drehen
+  - Abbrmsen
+  - Ganz Nach drehen um
+  - Maximale Dreh geschwindigket
+  - Keine Reflexion
+
+##########
+
+- algorithmen
+ - können unterschiedliche daten haben die zusammen mit GraphicsItem hängen
+ - was müssen wissen die
+   - position
+   - rahmen
+   - bewegung
+   - umfeld
+   - eigene daten
+   - algorithm soll irgendwann ein script werden
+
+
+
+
+###
+
+V Ausweichen - muss die Nachbar sortieren. Ausweichen hat priorität. Wenn ausweichen gemacht dann kann auch weiter mit anderen versucht werden. Brauche 2 Schleifen durchgänge
+
+Wenn ausweichen nicht möglich dann abbremsen. Wenn die situation vorüber ist dann wieder beschleunigen
+
+Wenn vorfolgen - wenn Kurs fast gleich dann beschleunigen.
+
+Standard Situation - wenn keine Schwarm dann auch normal geschwindigkeit beschleunigen
+
+Standard Geschwindigkeit - Abweichung bei start
+
+
+####
+
+Benutzbarkeit
+ - Anhalten/Starten V
+ - Geschwindigkeit anpassen V
+ - Elem Inspect
+ - Richtungsvector ZEigen V
+
+####################
+Kollisionsvermeidung
+
+- Wenn in schwarm dann weniger abweichen
+- wenn collision unter 90grad dann gegenseitig abweichen
+-
+
+#############################
+Offene Punkte
+
+- zu weit funktioniert nicht (die beschleunigung reicht nicht aus, es finden keine Anschluss staat,
+es muss eine übergeschwindigkeit für die zeit des ankommen geben)
+- die Elemente kleben zu wenig
+  - Ein schwarm kann sich teilen wenn 2 Anführer bestehen. (oft entsteht eine Front, die Auseinander fällt, es müsste
+      eine Präferez zu Hintereinanderreihen (Formation) bestehen)). Also Platzire sich rechst oder linke von Anführer)
+  - Durch kollsionsvermeidung kann ein Schwar auseinanderfallen. Während der Kollisionsvermeidung (merke den Schwarm anführer und suche anschluss wenn möglich.
+     Es sei den man ist immer noch in Schwarm
+- Anschluss soll besser klappen zu einem Schwarm
+  - Wenn mehrere Elemente in sicht die offensichtlich ein Schwarm sind, dann mit prio anschliessen wenn man kein schwarm sind
+    (Prüfe mode von Elementen, ist schwarm) Ein Schwarm müsste wie Anziehungskraft wirken (Kann man es machen, auch mit mehreren Elementen)
+- Wenn steht dann irgendwo anfangen sich zu bewegen (der stehende hat keine Richtung, kann also nicht beschleunigen)
+-
+
+##########################
+Ideen
+
+- Bewege sich ein Eine Sphere (3D)
+- Unbewegliche Elemente die unbedingt ausgewichen werden müssen
+- Point of Interest
+- Predator
+- Spiel versuche durch Predators und Blöcke ein Schwarm durch eine öffnung zu führen, Es könnten Tiere sein
+  (Spiele mit Touch)
+
+
+#########################
+GUI
+
+- neue elemente durch klicken hinzufügen (klicken und ziehen, auch bei stopp)
+- introspection der elemente (wenn stopp dann was ist unter cursor)
+-
+
+
+
+QPointF
+QVector2D - distanceToLine, distanceToPoint, length, Skalarprodukt
+QQuaternion - 3D Vector + Sklalar
+
+#######################################################
+Physics Engine CCD
+
+2d
+
+box2d - artikel in C't Programmieren 2016
+chipmunk
+Havok
+opend
+
+3d
+
+reactphysics3d
+
+
+

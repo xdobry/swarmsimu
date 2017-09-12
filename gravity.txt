@@ -1,0 +1,30 @@
+Ansatz zu ermittlung der Iteration
+
+Idee. Mache es so wie bei gravity
+
+Es gibt Idealle Entfernung
+
+- Alle die Größer sind siehen sich an
+- Alle die kleiner sind stoßen sich ab
+- Die Anziehkräfte sind quadratisch zu entfernung
+- Was ist mit der Eigengeschwindigkeit
+  - Es zählt nicht
+  - Es zählt nur differenz - Bezugspunkt ist eigen
+  - Es hat auswirkungen auf masse (je schneller desto schwerer)
+
+- R = optimal
+
+- F = (G*m1*m2)/r^2
+
+- Problem was passiert wenn mehrere elemente auch dahinter
+
+x   x   x
+  x   x
+    x
+
+- Die Zweite Reihe is nicht wichtig (Sortiere diese aus)
+- Man kann abstoß and anzei kräfte aus balanzieren
+-
+
+
+
