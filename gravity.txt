@@ -24,7 +24,51 @@ x   x   x
 
 - Die Zweite Reihe is nicht wichtig (Sortiere diese aus)
 - Man kann abstoß and anzei kräfte aus balanzieren
+
+Problem (Weil die aktuelle Bewegung nicht berücksichtig wird, kommt es zu Federn und
+sehr unruhigen Flug)
+
+- Besser, Berechne die relative geschwindigkeit zum schwarm, wenn
+die richtung stimmt dann nicht mehr machen (nur kleine richtungs anpasungen)
+- Soll vektor, ist Vektor
+
+#########################################################################################
+
+schwarm verhalten
+
+- die richtung ergibt sich aus unterschiedlichen Zwängen, die prorität haben
+
+- enge
+- schwarm
+- anschluss (Problem 2 Schärme können sich schlecht verbinden)
+- collision (Items)
+- rahmen
+- collision items
+
+- collision kann man auch als eine Art Anti Magnet sehen. Dann wäre das Problem mit Curven vorbei
+- Point of Interest
+   - Magnet (Ab gewissen Gränze Anti Magnet, damit es keine Zentral kollision gibt)
+   - Es ist nicht mit sichtfeld verbunden (Sonst würde man es verlieren, vogel muss sich quasi POI merken)
+   - Aber es muss sich so verhalten dass es nur die Bahn ablenkt aber keine Geschwindigkeit mindert
+- Predator ist starker antimagnet (Geschwindigkeit muss konstant sein oder sogar steigen)
+- Brrier benutzten auch gravity model mit vector 90grad seitlich zu verbindung (konstante geschwindigkeit)
+- Kann man auch für punkte collision benutzten
+
+
+- Auch Rahmen kann sich wie ein Anti Magnet verhalten
+
+###############################################################
+Item Collision
+- Wenn zu nah (<minimal, richtung ist dann agal) dann nur gravitation (Abstoßen)
 -
+
+
+- Item Collision (Mit gravity ist es nicht zu machen, weil sonst immer die Bewegung
+  von Gegner weg wäre, vielleicht nicht so schlecht)
+
+
+
+
 
 
 

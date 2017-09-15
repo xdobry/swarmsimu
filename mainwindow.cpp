@@ -2,7 +2,9 @@
 #include "ui_mainwindow.h"
 #include <QRectF>
 #include <QTimer>
+#include <QFileDialog>
 #include "schwarmelem.h"
+//#include <QGLWidget>
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -11,22 +13,19 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
 
     scene.setSceneRect(-500, -300, 1000, 600);
+    scene.setItemIndexMethod(QGraphicsScene::NoIndex);
 
     ui->graphicsView->setScene(&scene);
-    ui->graphicsView->setRenderHint(QPainter::Antialiasing);
-    ui->graphicsView->setBackgroundBrush(QPixmap(":/images/cheese.jpg"));
-    ui->graphicsView->setCacheMode(QGraphicsView::CacheBackground);
     ui->graphicsView->setViewportUpdateMode(QGraphicsView::BoundingRectViewportUpdate);
-    ui->graphicsView->setDragMode(QGraphicsView::ScrollHandDrag);
+    //ui->graphicsView->setViewport(new QGLWidget());
 
     ui->graphicsView->show();
+
+    params2gui();
 
     timer = new QTimer(this);
     QObject::connect(timer, SIGNAL(timeout()), &scene, SLOT(advance()));
 
-    ui->param1->setValue(scene.schwarmAlgorithm.getParam1());
-    ui->param2->setValue(scene.schwarmAlgorithm.getParam1());
-    ui->spinSpeed->setValue(scene.schwarmAlgorithm.getSpeed());
     timer->start(1000 / framesProSecond);
     isRuning = true;
 }
@@ -34,6 +33,36 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow()
 {
     delete ui;
+}
+
+void MainWindow::openFile()
+{
+    QString fileName = QFileDialog::getOpenFileName(this,"Open Swarm File", "/home/jana", "Swarm File (*.xml)");
+    if (!fileName.isNull()) {
+        scene.openFile(fileName);
+        params2gui();
+    }
+}
+
+void MainWindow::saveFile()
+{
+    if (!savedFile.isNull()) {
+        scene.saveFile(savedFile);
+    }
+}
+
+void MainWindow::saveFileAs()
+{
+    QString nameToSave = "swarm.xml";
+    if (!savedFile.isNull()) {
+        nameToSave = savedFile;
+    }
+    QString fileName = QFileDialog::getSaveFileName(this,"Open Swarm File", nameToSave , "Swarm File (*.xml)");
+    if (!fileName.isNull()) {
+        if (scene.saveFile(fileName)) {
+            savedFile = fileName;
+        }
+    }
 }
 
 void MainWindow::on_btnStart_clicked()
@@ -99,4 +128,33 @@ void MainWindow::on_checkBox_toggled(bool checked)
 void MainWindow::on_spinSpeed_valueChanged(double speed)
 {
     scene.schwarmAlgorithm.setSpeed(speed);
+}
+
+void MainWindow::on_rdbElem_toggled(bool checked)
+{
+    if (checked) {
+        scene.setAddElemType(SwarmScene::swarm);
+    }
+}
+
+void MainWindow::on_rdbPOI_toggled(bool checked)
+{
+    if (checked) {
+        scene.setAddElemType(SwarmScene::poi);
+    }
+}
+
+void MainWindow::on_rdbBarrier_toggled(bool checked)
+{
+    if (checked) {
+        scene.setAddElemType(SwarmScene::barrier);
+    }
+}
+
+void MainWindow::params2gui()
+{
+    ui->param1->setValue(scene.schwarmAlgorithm.getParam1());
+    ui->param2->setValue(scene.schwarmAlgorithm.getParam2());
+    ui->spinSpeed->setValue(scene.schwarmAlgorithm.getSpeed());
+
 }

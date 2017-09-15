@@ -100,10 +100,35 @@ Ideen
 #########################
 GUI
 
-- neue elemente durch klicken hinzufügen (klicken und ziehen, auch bei stopp)
+- V neue elemente durch klicken hinzufügen (klicken und ziehen, auch bei stopp)
 - introspection der elemente (wenn stopp dann was ist unter cursor)
+- V elemente entfernen
+- Flieg Feld automatisch auf die sceen größe setzen
+- Standard is unendlich
+- poi und barriers automatisch setzen, liquidieren (poi und barrier haben verschiedene stärken und größen
+- Bei Berührung vernichten
+- Schwarm als Punkte berechnen aber als Klumpen darstellen (So wie roco poko)
+- Optimale Geschwindigkeit Anpassen
+- Enfernung zwischen Punkten anpassen
+- Poi Pulsiert und schwächelt (also es kann die Elemente loslasen)
+- Zustand Als Datei abspeichern (Menu Leiste?)
+- Elemente können unterschiedliche Größen haben (Es wäre dann unterschiedliche Masse)
+- Vollbild
+- Schwarzer Hintergrund oder bessere pastelfarbe.
+- Element hinterlassen einen schleif
+- optimisch aufpeppeln durch OpenGL
 -
 
+#################################
+Optimierung
+
+- index selbst verwalten oder selbst benutzten
+- float anstaat double benutzten
+- selbst ein widget machen und alles selbst als kreise oder punkte zeichnen
+- alle elemente sind feste structs in array
+- tabellen für winkler berechnungen benutzten (atan, cos, sin)
+- entfernungen nicht 2 mal berechnen (bei index wird das schon mal gemacht)
+-
 
 
 QPointF

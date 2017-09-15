@@ -4,6 +4,8 @@
 #include <QList>
 
 class SchwarmElem;
+class BarrierElem;
+class PoiElem;
 
 qreal pointDistance(qreal x1,qreal y1,qreal x2, qreal y2);
 
@@ -28,12 +30,13 @@ public:
 
 class ParamSchwarmAlgorithm : public SchwarmAlgorithm {
 protected:
-    double param1;
-    double param2;
+    // optimal distance
+    double param1 = 15;
+    double param2 = 3;
     bool showSeeField = false;
     bool deleteSeeField = false;
     double angleCorrectur = 2;
-    bool endlessWord = false;
+    bool endlessWord = true;
     double normalSpeed = 3;
     double acceleration = 0.2;
 public:
@@ -61,15 +64,15 @@ class InteractSchwarmAlgorithm : public ParamSchwarmAlgorithm {
 public:
     InteractSchwarmAlgorithm(double p1,double p2);
     void advance(SchwarmElem &schwarmElem) override;
-    void test();
 
 private:
     qreal avoidBorder(SchwarmElem &schwarmElem, qreal crotation);
-    void adaptTooNear(SchwarmElem &schwarmElem, double ownAngle, const QList<NextSchwarmElem> &nearSchwarm);
-    void adaptTooFar(SchwarmElem &schwarmElem, double ownAngle, const QList<NextSchwarmElem> &farSchwarm);
+    void adaptInSwarm(SchwarmElem &schwarmElem, double ownAngle, QList<NextSchwarmElem> &farSchwarm, const QList<NextSchwarmElem> &nearSchwarm);
     void adaptForCollisions(SchwarmElem &schwarmElem,double ownAngle,const QList<CollisionSchwarmElem> &collisionSchwarm,int countOwnSchwarm);
-    void addToSchwarm(SchwarmElem &schwarmElem, const QList<SchwarmElem*> &posibleSchwarm);
+    void adaptForBarriers(SchwarmElem &schwarmElem,const QList<BarrierElem*> &barrierElems);
+    void adaptForPois(SchwarmElem &schwarmElem);
     void moveElem(SchwarmElem &schwarmElemW);
+    qreal getOptimalDistance();
 };
 
 

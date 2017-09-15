@@ -1,89 +1,13 @@
-#include "schwarmalgorithm.h"
+﻿#include "schwarmalgorithm.h"
 #include "schwarmelem.h"
+#include "vecmath.h"
 #include <QGraphicsScene>
 #include <QGraphicsPolygonItem>
 #include <QRectF>
 #include <math.h>
+#include <algorithm>
 
-static const double Pi = 3.14159265358979323846264338327950288419717;
-//static double TwoPi = 2.0 * Pi;
 static const double minColTime = 60;
-static const double optimalDistance = 15;
-
-/**
- * -180..180
- * @brief getAngleDegress
- * @param dx
- * @param dy
- * @return
- */
-double getAngleDegress(double dx,double dy) {
-  return atan2(dx, -dy)*180.0/Pi;
-}
-
-qreal vectorSpeed(qreal dx,qreal dy) {
-    return sqrt(dx*dx+dy*dy);
-}
-
-void rotateVector(qreal &dx,qreal &dy,qreal angleDegrees) {
-    qreal angleRadians = angleDegrees*Pi/180;
-    qreal dxtemp = dx;
-    dx = dx * cos(angleRadians) - dy * sin(angleRadians);
-    dy = dxtemp * sin(angleRadians) + dy * cos(angleRadians);
-}
-
-void scaleVector(qreal &dx,qreal &dy,qreal scale) {
-    dx*=scale;
-    dy*=scale;
-}
-
-void addVectorLen(qreal &dx, qreal &dy,qreal acc) {
-    qreal len = vectorSpeed(dx,dy);
-    if (len>0) {
-        dx += dx/len*acc;
-        dy += dy/len*acc;
-    } else {
-        // Create random vx, vy
-        qreal vmax = 10;
-        qreal vx = ((qreal)rand()/RAND_MAX)*vmax-vmax/2;
-        qreal vy = ((qreal)rand()/RAND_MAX)*vmax-vmax/2;
-        len = vectorSpeed(dx,dy);
-        dx = dx/len*acc;
-        dy = dy/len*acc;
-    }
-}
-
-void setVectorLen(qreal &dx, qreal &dy,qreal neededLen) {
-    qreal len = vectorSpeed(dx,dy);
-    if (len>0) {
-        dx = dx/len*neededLen;
-        dy = dy/len*neededLen;
-    }
-}
-
-qreal getAngleAbs(qreal angle1,qreal angle2) {
-    qreal diff = angle1-angle2;
-    if (diff<0) {
-        diff = -diff;
-    }
-    //diff = remainder(diff,360);
-    if (diff>180) {
-        diff = 360-diff;
-    }
-    return diff;
-}
-
-qreal normalizeAngle(qreal angle) {
-    angle = fmod(angle,360);
-    if (angle<0) {
-        angle+=360;
-    }
-    return angle;
-}
-
-qreal pointDistance (qreal x1,qreal y1,qreal x2, qreal y2) {
-    return sqrt((x1-x2)*(x1-x2)+(y1-y2)*(y1-y2));
-}
 
 void ParamSchwarmAlgorithm::setParam1(double param)
 {
@@ -219,7 +143,7 @@ void CurvingSchwarmAlgorithm::advance(SchwarmElem &schwarmElem) {
     // rotation needed for border nearship
     qreal crotation = 0;
     int preferedRotationSign = 0;
-    qreal curveParam = param1;
+    qreal curveParam = 0.3;
     if (qAbs(relx)>0.8) {
         // check if already not flying back
         if ((relx>0 && schwarmElem.vx>0) || (relx<0 && schwarmElem.vx<0)) {
@@ -270,6 +194,7 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
 {  
     // rotation needed for border nearship
     qreal crotation = 0;
+    qreal optimalDistance = getOptimalDistance();
     if (!endlessWord) {
         crotation = avoidBorder(schwarmElem, crotation);
     } else {
@@ -281,7 +206,11 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
         foreach (QGraphicsItem *item, children) {
             item->setParentItem(NULL);
             schwarmElem.scene()->removeItem(item);
-            delete item;
+            // mit delete gibt es ein crash aber früher scheint das funktioniert zu haben
+            // man müsste uch deleteSeeField ausschalten nach einem ganzen advance
+            // das wird aber nicht gemacht
+            // weil die steuerung über ganze mehtode nicht abgreifbar is (kein virtual)
+            // delete item;
         }
     }
     if (crotation==0) {
@@ -299,18 +228,12 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
         int schwarmCount = 0;
         if (crotation==0 && nearItems.size()>1) {
             int countOwnSchwarm = 0;
-            int countPossibleSchwarm = 0;
-            qreal sx = schwarmElem.vx;
-            qreal sy = schwarmElem.vy;
-            QList<SchwarmElem*> possibleSchwarm;
+            QList<BarrierElem*> barrierElems;
             QList<NextSchwarmElem> nearSchwarm;
             QList<NextSchwarmElem> farSchwarm;
             QList<CollisionSchwarmElem> collisions;
-            //qDebug("own pos x=%lf, y=%lf",schwarmElem.x(),schwarmElem.y());
-            bool hasAlreadyNear = false;
-            qreal ownAngle = getAngleDegress(sx,sy);
-            qreal avgNextSpeedSum = 0;
-            int countForNextSpeedSum = 0;
+            qreal ownAngle = getAngleDegress(schwarmElem.vx,schwarmElem.vy);
+            qreal ownSpeed = vectorSpeed(schwarmElem.vx,schwarmElem.vy);
             foreach (QGraphicsItem *item, nearItems) {
                if (item == &schwarmElem) {
                    continue;
@@ -320,34 +243,25 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
                    if (schwarmElem.mode==alone) {
                       schwarmElem.mode = see;
                    }
-                   schwarmCount++;
                    qreal nAngle = getAngleDegress(nextSchwarmElem->vx,nextSchwarmElem->vy);
                    qreal absAngle = getAngleAbs(ownAngle,nAngle);
                    // qreal distance = pointDistance(nextSchwarmElem->x(),nextSchwarmElem->y(),schwarmElem.x(),schwarmElem.y());
                    qreal nextDistance = pointDistance(nextSchwarmElem->x()+nextSchwarmElem->vx,
                                                       nextSchwarmElem->y()+nextSchwarmElem->vy,
-                                                      schwarmElem.x()+sx,
-                                                      schwarmElem.y()+sy);
+                                                      schwarmElem.x()+schwarmElem.vx,
+                                                      schwarmElem.y()+schwarmElem.vy);
                    //qDebug("next pos x=%lf, y=%lf",nextSchwarmElem->x(),nextSchwarmElem->y());
-                   if (absAngle<10) {
-                       if (nextDistance<optimalDistance) {
-                           // korriegieren abstand zu klein
-                           nearSchwarm.append({nextSchwarmElem,nextDistance});
-                           hasAlreadyNear = true;
-                           schwarmElem.mode = crowded;
-                       } else if (nextDistance>25 && !hasAlreadyNear) {
-                           farSchwarm.append({nextSchwarmElem,nextDistance});
-                       } else {
-                           if (schwarmElem.mode==see) {
-                               schwarmElem.mode = swarm;
-                           }
-                           countForNextSpeedSum++;
-                           avgNextSpeedSum += vectorSpeed(nextSchwarmElem->vx,nextSchwarmElem->vy);
+                   if (nextDistance<optimalDistance) {
+                       // korriegieren abstand zu klein
+                       nearSchwarm.append({nextSchwarmElem,nextDistance});
+                       schwarmElem.mode = crowded;
+                   } else if (absAngle<45 || (ownSpeed<normalSpeed*0.1 && vectorSpeed(nextSchwarmElem->vx,nextSchwarmElem->vy)>normalSpeed/2)) {
+                       schwarmCount++;
+                       farSchwarm.append({nextSchwarmElem,nextDistance});
+                       if (schwarmElem.mode==see) {
+                           schwarmElem.mode = swarm;
                        }
                        countOwnSchwarm++;
-                   } else if (absAngle<45) {
-                       possibleSchwarm.append(nextSchwarmElem);
-                       countPossibleSchwarm++;
                    } else {
                        // Ausweichen wenn nötig (Kollisionskurs)
                        CollisionData collisionData = schwarmElem.computeCollisionDistance(*nextSchwarmElem);
@@ -356,27 +270,20 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
                            schwarmElem.mode = collision;
                        }
                    }
+               } else {
+                   BarrierElem *nextBarrierElem = dynamic_cast<BarrierElem*>(item);
+                   if (nextBarrierElem) {
+                       barrierElems.append(nextBarrierElem);
+                   }
                }
             }
             if (collisions.size()>0) {
                 adaptForCollisions(schwarmElem,ownAngle,collisions,countOwnSchwarm);
-            } else if (nearSchwarm.size()>0) {
-                adaptTooNear(schwarmElem,ownAngle,nearSchwarm);
-            } else if (farSchwarm.size()>0) {
-                schwarmElem.mode = farswarm;
-                adaptTooFar(schwarmElem,ownAngle,farSchwarm);
-            } else if (possibleSchwarm.size()>0 && countOwnSchwarm==0) {
-                addToSchwarm(schwarmElem,possibleSchwarm);
-            } else {
-                if (countForNextSpeedSum>0) {
-                    qreal nextSpeedAvg = avgNextSpeedSum/countForNextSpeedSum;
-                    qreal ownSpeed = vectorSpeed(sx,sy);
-                    if (nextSpeedAvg>ownSpeed+acceleration/2) {
-                        addVectorLen(schwarmElem.vx,schwarmElem.vy,acceleration/2);
-                    } else if (nextSpeedAvg<ownSpeed-acceleration/2) {
-                        addVectorLen(schwarmElem.vx,schwarmElem.vy,-acceleration/2);
-                    }
-                }
+            } else if (nearSchwarm.size()>0 || farSchwarm.size()>0) {
+                adaptInSwarm(schwarmElem,ownAngle,farSchwarm,nearSchwarm);
+            }
+            if (barrierElems.size()>0) {
+                adaptForBarriers(schwarmElem,barrierElems);
             }
         }
         if (schwarmCount==0) {
@@ -394,6 +301,7 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
        rotateVector(schwarmElem.vx,schwarmElem.vy,schwarmElem.vrotation);
     }
     schwarmElem.setRotation(getAngleDegress(schwarmElem.vx,schwarmElem.vy));
+    adaptForPois(schwarmElem);
     moveElem(schwarmElem);
 }
 
@@ -421,6 +329,11 @@ void InteractSchwarmAlgorithm::moveElem(SchwarmElem &schwarmElem)
     } else {
         schwarmElem.moveBy(schwarmElem.vx,schwarmElem.vy);
     }
+}
+
+qreal InteractSchwarmAlgorithm::getOptimalDistance()
+{
+    return param1;
 }
 
 
@@ -455,9 +368,9 @@ qreal InteractSchwarmAlgorithm::avoidBorder(SchwarmElem &schwarmElem, qreal crot
     }
     if (crotation>0) {
         if (schwarmElem.vrotation==0) {
-            schwarmElem.vrotation = crotation * preferedRotationSign * 180 / Pi;
+            schwarmElem.vrotation = crotation * preferedRotationSign * 180 / 3.14;
         } else {
-           schwarmElem.vrotation =  (schwarmElem.vrotation > 0 ? crotation : -crotation) * 180 / Pi;
+           schwarmElem.vrotation =  (schwarmElem.vrotation > 0 ? crotation : -crotation) * 180 / 3.14;
         }
     } else {
         if (schwarmElem.vrotation<10) {
@@ -467,28 +380,6 @@ qreal InteractSchwarmAlgorithm::avoidBorder(SchwarmElem &schwarmElem, qreal crot
         }
     }
     return crotation;
-}
-
-
-void InteractSchwarmAlgorithm::adaptTooNear(SchwarmElem &schwarmElem,double ownAngle,const QList<NextSchwarmElem> &nearSchwarm) {
-    qreal distance = -1;
-    SchwarmElem* nearestElem;
-    qreal dx = 0;
-    qreal dy = 0;
-    // only correct to nearest element
-    foreach (NextSchwarmElem elem, nearSchwarm) {
-        if (elem.distance<optimalDistance) {
-            distance = elem.distance;
-            qreal gravity = 0.08*(optimalDistance-elem.distance)*(optimalDistance-elem.distance);
-            qreal edx = schwarmElem.x()-elem.schwarmElem->x();
-            qreal edy = schwarmElem.y()-elem.schwarmElem->y();
-            setVectorLen(edx,edy,gravity);
-            dx += edx;
-            dy += edy;
-        }
-    }
-    schwarmElem.vx += dx;
-    schwarmElem.vy += dy;
 }
 
 void InteractSchwarmAlgorithm::adaptForCollisions(SchwarmElem &schwarmElem,double ownAngle,const QList<CollisionSchwarmElem> &collisionSchwarm,int countOwnSchwarm) {
@@ -512,9 +403,12 @@ void InteractSchwarmAlgorithm::adaptForCollisions(SchwarmElem &schwarmElem,doubl
         correktur = -correktur;
     }
 
+    correktur = correktur * 10 / time;
+    /*
     if (time<10) {
         correktur = correktur*2;
     }
+    */
     rotateVector(schwarmElem.vx,schwarmElem.vy,correktur);
     if (time<5) {
         qreal ownSpeed = vectorSpeed(schwarmElem.vx,schwarmElem.vy);
@@ -524,72 +418,145 @@ void InteractSchwarmAlgorithm::adaptForCollisions(SchwarmElem &schwarmElem,doubl
     }
 }
 
-void InteractSchwarmAlgorithm::adaptTooFar(SchwarmElem &schwarmElem,double ownAngle,const QList<NextSchwarmElem> &farSchwarm) {
-    qreal distance = 1000;
-    SchwarmElem *nextSchwarmElem;
-    // only correct to nearest element
+void InteractSchwarmAlgorithm::adaptForBarriers(SchwarmElem &schwarmElem, const QList<BarrierElem*> &barrierElems)
+{
+    qreal dx = 0;
+    qreal dy = 0;
+    int count = 0;
+    qreal minDistance = 50;
+    foreach (BarrierElem *elem, barrierElems) {
+        qreal distance = pointDistance(schwarmElem.x(),schwarmElem.y(),elem->x(),elem->y());
+        if (distance<minDistance) {
+            //qreal gravity = 0.02*(optimalDistance-elem.distance)*(optimalDistance-elem.distance);
+            qreal gravity = 0.05*(minDistance-distance);
+            qreal edx = schwarmElem.x()-elem->x();
+            qreal edy = schwarmElem.y()-elem->y();
+            setVectorLen(edx,edy,gravity);
+            dx += edx;
+            dy += edy;
+            count++;
+        }
+    }
+    if (count>0) {
+        qreal ownAngle = getAngleDegress(schwarmElem.vx,schwarmElem.vy);
+        qreal barrierAngle = getAngleDegress(dx,dy);
+        qreal angleAbs = getAngleAbs(ownAngle,barrierAngle);
+        if (angleAbs>135) {
+            int rotationSign = relativeAngle(barrierAngle,ownAngle)<180 ? -1 : 1;
+            rotateVector(dx,dy,90*rotationSign);
+            qreal speed = schwarmElem.speed();
+            schwarmElem.vx += dx;
+            schwarmElem.vy += dy;
+            schwarmElem.setSpeed(speed);
+        }
+    }
+}
+
+void InteractSchwarmAlgorithm::adaptForPois(SchwarmElem &schwarmElem)
+{
+    qreal dx = 0;
+    qreal dy = 0;
+    int count = 0;
+    // Ist interessiert kommt aber nicht näher als bei minDinstance
+    qreal minDistance = 30;
+    foreach (PoiElem *elem, schwarmElem.poiElems) {
+        qreal distance = pointDistance(schwarmElem.x(),schwarmElem.y(),elem->x(),elem->y());
+        count++;
+        if (distance<minDistance) {
+            //qreal gravity = 0.02*(optimalDistance-elem.distance)*(optimalDistance-elem.distance);
+            qreal gravity = 0.05*(minDistance-distance);
+            qreal edx = schwarmElem.x()-elem->x();
+            qreal edy = schwarmElem.y()-elem->y();
+            setVectorLen(edx,edy,gravity);
+            dx += edx;
+            dy += edy;
+        } else {
+            qreal gravity = 0.2*sqrt((distance-minDistance));
+            qreal edx = elem->x()-schwarmElem.x();
+            qreal edy = elem->y()-schwarmElem.y();
+            setVectorLen(edx,edy,gravity);
+            dx += edx;
+            dy += edy;
+        }
+    }
+    if (count>0) {
+        qreal speed = schwarmElem.speed();
+        schwarmElem.vx += dx;
+        schwarmElem.vy += dy;
+        schwarmElem.setSpeed(speed);
+        schwarmElem.poiElems.clear();
+    }
+}
+
+bool nextScharmElemLess(const NextSchwarmElem &next1,const NextSchwarmElem &next2) {
+    return next1.distance<next2.distance;
+}
+
+void InteractSchwarmAlgorithm::adaptInSwarm(SchwarmElem &schwarmElem,double ownAngle,QList<NextSchwarmElem> &farSchwarm,const QList<NextSchwarmElem> &nearSchwarm) {
+    qreal dx = 0;
+    qreal dy = 0;
+    int swarmCount = 0;
+    qreal sx = 0;
+    qreal sy = 0;
+    qreal optimalDistance = getOptimalDistance();
+    foreach (NextSchwarmElem elem, nearSchwarm) {
+        if (elem.distance<optimalDistance) {
+            //qreal gravity = 0.02*(optimalDistance-elem.distance)*(optimalDistance-elem.distance);
+            qreal gravity = 0.05*(optimalDistance-elem.distance);
+            qreal edx = schwarmElem.x()-elem.schwarmElem->x();
+            qreal edy = schwarmElem.y()-elem.schwarmElem->y();
+            setVectorLen(edx,edy,gravity);
+            dx += edx;
+            dy += edy;
+            swarmCount++;
+            sx+=elem.schwarmElem->vx;
+            sy+=elem.schwarmElem->vy;
+        }
+    }
+    std::sort(farSchwarm.begin(),farSchwarm.end(),nextScharmElemLess);
+    qreal firstDistance = -1;
     foreach (NextSchwarmElem elem, farSchwarm) {
-         if (elem.distance<distance) {
-             nextSchwarmElem=elem.schwarmElem;
-         }
-    }
-    int adaptSign = 1;
-    if (ownAngle>=-45 && ownAngle<45) {
-        if (schwarmElem.x()>nextSchwarmElem->x()) {
-            adaptSign = -1;
+        if (firstDistance>0 && elem.distance+optimalDistance>firstDistance) {
+            // Zweite reihe, abbrechen
+            break;
         }
-    } else if (ownAngle>45 && ownAngle<=135) {
-        if (schwarmElem.y()>nextSchwarmElem->y()) {
-            adaptSign = -1;
-        }
-    } else if (ownAngle>135 && ownAngle<-135) {
-        if (schwarmElem.x()<nextSchwarmElem->x()) {
-            adaptSign = -1;
-        }
-    } else if (ownAngle<-45 && ownAngle>=-135) {
-        if (schwarmElem.y()<nextSchwarmElem->y()) {
-            adaptSign = -1;
+        if (elem.distance>=optimalDistance) {
+            //qreal gravity = 0.08*(elem.distance-optimalDistance)*(elem.distance-optimalDistance);
+            qreal gravity = 0.05*sqrt((elem.distance-optimalDistance));
+            qreal edx = elem.schwarmElem->x()-schwarmElem.x();
+            qreal edy = elem.schwarmElem->y()-schwarmElem.y();
+            setVectorLen(edx,edy,gravity);
+            dx += edx;
+            dy += edy;
+            if (firstDistance<0) {
+                firstDistance = elem.distance;
+            }
+            swarmCount++;
+            sx+=elem.schwarmElem->vx;
+            sy+=elem.schwarmElem->vy;
         }
     }
-    qreal sx = schwarmElem.vx;
-    qreal sy = schwarmElem.vy;
-    rotateVector(sx,sy,adaptSign*angleCorrectur);
-    qreal nextSpeed = vectorSpeed(nextSchwarmElem->vx,nextSchwarmElem->vy);
-    qreal ownSpeed = vectorSpeed(sx,sy);
-    if (nextSpeed>ownSpeed-acceleration) {
-         addVectorLen(sx,sy,acceleration);
+    qreal aspeed = vectorSpeed(dx,dy);
+    qreal maxAdaptSpeed = normalSpeed/3;
+    if (aspeed>maxAdaptSpeed) {
+        setVectorLen(dx,dy,maxAdaptSpeed);
     }
-    schwarmElem.vx = sx;
-    schwarmElem.vy = sy;
-}
-
-void InteractSchwarmAlgorithm::addToSchwarm(SchwarmElem &schwarmElem, const QList<SchwarmElem *> &possibleSchwarm)
-{
-    schwarmElem.mode = annexation;
-    // Anpassen an durchschnitt des Schwarms. Eingliedern
-    qreal sx = schwarmElem.vx;
-    qreal sy = schwarmElem.vy;
-    foreach (SchwarmElem *schwarmItem, possibleSchwarm) {
-        sx = (sx+schwarmItem->vx)/2;
-        sy = (sy+schwarmItem->vy)/2;
+    if (swarmCount>0) {
+        sx = sx/swarmCount;
+        sy = sy/swarmCount;
     }
-    schwarmElem.vx = sx;
-    schwarmElem.vy = sy;
-}
+    // Geschwindigkeit in Relation zu swarm
+    qreal rvx = sx-schwarmElem.vx;
+    qreal rvy = sy-schwarmElem.vy;
 
+    // Korrektur in der Geschwindigkeit
+    dx = rvx+dx;
+    dy = rvy+dy;
 
-void InteractSchwarmAlgorithm::test()
-{
-    qDebug("getAngleDegress(1,0.002)=%f test=%f",getAngleDegress(1,0.002),90.02);
-    qDebug("getAngleDegress(-1.02,1.2)=%lf",getAngleDegress(-1.02,1.2));
-    qDebug("getAngleAbs(-10,10)=%lf",getAngleAbs(-10,10));
-    qDebug("getAngleAbs(10,20)=%lf",getAngleAbs(10,20));
-    qDebug("getAngleAbs(-90,91)=%lf",getAngleAbs(-90,91));
-    qDebug("vectorSpeed(1,-1)=%lf",vectorSpeed(1,1));
-    qreal x=1, y=1;
-    scaleVector(x,y,vectorSpeed(2,2)/vectorSpeed(1,1));
-    qDebug("after scale x=%lf y=%lf",x,y);
-    rotateVector(x,y,90);
-    qDebug("after rotate 90 x=%lf y=%lf",x,y);
-
+    schwarmElem.vx += dx;
+    schwarmElem.vy += dy;
+    qreal speed = vectorSpeed(schwarmElem.vx,schwarmElem.vy);
+    if (speed>normalSpeed*1.3) {
+        setVectorLen(schwarmElem.vx,schwarmElem.vy,normalSpeed*1.3);
+    }
 }

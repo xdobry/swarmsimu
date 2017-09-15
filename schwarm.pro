@@ -28,17 +28,20 @@ SOURCES += \
         mainwindow.cpp \
     schwarmelem.cpp \
     schwarmalgorithm.cpp \
-    swarmscene.cpp
+    swarmscene.cpp \
+    vecmath.cpp
 
 HEADERS += \
         mainwindow.h \
     schwarmelem.h \
     schwarmalgorithm.h \
-    swarmscene.h
+    swarmscene.h \
+    vecmath.h
 
 FORMS += \
         mainwindow.ui
 
 DISTFILES += \
     todo.txt \
-    gravity.txt
+    gravity.txt \
+    recherche.txt

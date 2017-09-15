@@ -3,6 +3,7 @@
 
 #include <qglobal.h>
 #include <QGraphicsItem>
+#include <QList>
 
 class SchwarmAlgorithm;
 
@@ -15,6 +16,19 @@ struct CollisionData {
     double time;
 };
 
+class PoiElem: public QGraphicsItem
+{
+public:
+    PoiElem(qreal x,qreal y);
+    QRectF boundingRect() const override;
+    QPainterPath shape() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
+               QWidget *widget) override;
+    qreal spread() const;
+protected:
+    void advance(int step) override;
+};
+
 class SchwarmElem : public QGraphicsItem
 {
 private:
@@ -23,6 +37,7 @@ private:
     qreal vrotation = 0;
     ScharmElemMode mode = alone;
     SchwarmAlgorithm& schwarmAlgorithm;
+    QList<PoiElem*> poiElems;
 
 public:
     SchwarmElem(qreal x,qreal y,qreal vx,qreal vy,SchwarmAlgorithm& schwarmAlgorithm);
@@ -32,13 +47,31 @@ public:
                QWidget *widget) override;
     CollisionData computeCollisionDistance(const SchwarmElem &schwarmElem);
     qreal spread() const;
+    qreal speed() const;
+    void setSpeed(qreal speed);
+    void addPoi(PoiElem *poiElem);
     friend class SchwarmAlgorithm;
     friend class BaseSchwarmAlgorithm;
     friend class CurvingSchwarmAlgorithm;
     friend class InteractSchwarmAlgorithm;
+    friend class SwarmScene;
 protected:
     void advance(int step) override;
 };
+
+
+class BarrierElem: public QGraphicsItem
+{
+public:
+    BarrierElem(qreal x,qreal y);
+    QRectF boundingRect() const override;
+    QPainterPath shape() const override;
+    void paint(QPainter *painter, const QStyleOptionGraphicsItem *option,
+               QWidget *widget) override;
+    qreal spread() const;
+};
+
+
 
 struct CollisionSchwarmElem {
    SchwarmElem *schwarmElem;

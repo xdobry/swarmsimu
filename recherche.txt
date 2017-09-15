@@ -1,0 +1,14 @@
+range index
+
+https://blog.lavrton.com/hit-region-detection-for-html5-canvas-and-how-to-listen-to-click-events-on-canvas-shapes-815034d7e9f8
+
+function isIntersect(point, circle) {
+  return Math.sqrt((point.x-circle.x) ** 2 + (point.y - circle.y) ** 2) < circle.radius;
+}
+
+Andere Lösung
+- Erstelle die Zeichnung mit einer Farbe für jedes Canvas. Prüfe dann die Pixel
+(Man kann die Resolution - runterskalieren)
+- berechne alles selbst wenn alles nur Kreise sind, ist alles ziemlich einfach (man kann es auch auf der Graphickarte machen)
+- man kann selber die listen mit elementen pfelgen und eigenen index machen
+-

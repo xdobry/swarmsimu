@@ -1,10 +1,13 @@
 #include "schwarmelem.h"
 #include "schwarmalgorithm.h"
+#include "vecmath.h"
 #include <QGraphicsScene>
 #include <QPainter>
 #include <QStyleOption>
 
 #define schwarm_size 6
+#define poi_size 12
+#define barrier_size 12
 
 SchwarmElem::SchwarmElem(qreal lx, qreal ly, qreal lvx, qreal lvy, SchwarmAlgorithm& sa) : vx(lvx), vy(lvy), schwarmAlgorithm(sa) {
     setPos(lx,ly);
@@ -81,6 +84,21 @@ qreal SchwarmElem::spread() const
     return schwarm_size;
 }
 
+qreal SchwarmElem::speed() const
+{
+    return vectorSpeed(vx,vy);
+}
+
+void SchwarmElem::setSpeed(qreal speed)
+{
+    setVectorLen(vx,vy,speed);
+}
+
+void SchwarmElem::addPoi(PoiElem *poiElem)
+{
+    poiElems.append(poiElem);
+}
+
 void SchwarmElem::advance(int step)
 {
     if (!step)
@@ -101,3 +119,75 @@ QPainterPath SchwarmElem::shape() const
 }
 
 
+
+PoiElem::PoiElem(qreal x, qreal y)
+{
+    setPos(x,y);
+}
+
+qreal PoiElem::spread() const
+{
+    return poi_size;
+}
+
+void PoiElem::advance(int step)
+{
+    if (!step) {
+        double nextRegion = 80;
+        QPolygonF seeFeld;
+        seeFeld<<QPointF(-nextRegion,-nextRegion)<<QPointF(-nextRegion,nextRegion)<<QPointF(nextRegion,nextRegion)<<QPointF(nextRegion,-nextRegion);
+        QList<QGraphicsItem *> nearItems = scene()->items(mapToScene(seeFeld));
+        foreach (QGraphicsItem *item, nearItems) {
+            SchwarmElem *nextSchwarmElem = dynamic_cast<SchwarmElem*>(item);
+            if (nextSchwarmElem) {
+                nextSchwarmElem->addPoi(this);
+            }
+        }
+    }
+}
+
+QRectF PoiElem::boundingRect() const
+{
+    return QRectF(-poi_size/2, -poi_size/2,poi_size,poi_size);
+}
+
+QPainterPath PoiElem::shape() const
+{
+    QPainterPath path;
+    path.addRect(-poi_size/2, -poi_size/2, poi_size, poi_size);
+    return path;
+}
+
+void PoiElem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    painter->setBrush(Qt::green);
+    painter->drawEllipse(QRectF(-poi_size/2, -poi_size/2, poi_size, poi_size));
+}
+
+BarrierElem::BarrierElem(qreal x, qreal y)
+{
+    setPos(x,y);
+}
+
+qreal BarrierElem::spread() const
+{
+    return barrier_size;
+}
+
+QRectF BarrierElem::boundingRect() const
+{
+    return QRectF(-barrier_size/2, -barrier_size/2,barrier_size,barrier_size);
+}
+
+QPainterPath BarrierElem::shape() const
+{
+    QPainterPath path;
+    path.addRect(-barrier_size/2, -barrier_size/2, barrier_size, barrier_size);
+    return path;
+}
+
+void BarrierElem::paint(QPainter *painter, const QStyleOptionGraphicsItem *option, QWidget *widget)
+{
+    painter->setBrush(Qt::red);
+    painter->drawEllipse(QRectF(-barrier_size/2, -barrier_size/2, barrier_size, barrier_size));
+}

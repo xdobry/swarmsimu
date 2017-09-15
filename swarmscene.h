@@ -7,20 +7,30 @@
 //! [0]
 class SwarmScene : public QGraphicsScene
 {
-    Q_OBJECT
+    Q_OBJECT   
 
 public:
+    enum ScharmElemAddType {
+        swarm, poi, barrier
+    };
     void addSwarmItem();
 
-    InteractSchwarmAlgorithm schwarmAlgorithm = InteractSchwarmAlgorithm(0.1,0.05);
+    InteractSchwarmAlgorithm schwarmAlgorithm = InteractSchwarmAlgorithm(15,0.05);
+
+    void setAddElemType(ScharmElemAddType schwarmElemAddType);
+    ScharmElemAddType getAddElemType();
+    void openFile(const QString &fileName);
+    bool saveFile(const QString &fileName);
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
     void mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
 
+
 private:
     QPointF mousePressPosition;
     bool hasPressed = false;
+    ScharmElemAddType schwarmElemAddType;
 
 };
 
