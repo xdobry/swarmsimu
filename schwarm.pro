@@ -4,7 +4,7 @@
 #
 #-------------------------------------------------
 
-QT       += core gui
+QT       += core gui multimedia
 
 greaterThan(QT_MAJOR_VERSION, 4): QT += widgets
 
@@ -29,14 +29,16 @@ SOURCES += \
     schwarmelem.cpp \
     schwarmalgorithm.cpp \
     swarmscene.cpp \
-    vecmath.cpp
+    vecmath.cpp \
+    swarmsound.cpp
 
 HEADERS += \
         mainwindow.h \
     schwarmelem.h \
     schwarmalgorithm.h \
     swarmscene.h \
-    vecmath.h
+    vecmath.h \
+    swarmsound.h
 
 FORMS += \
         mainwindow.ui
@@ -44,4 +46,5 @@ FORMS += \
 DISTFILES += \
     todo.txt \
     gravity.txt \
-    recherche.txt
+    recherche.txt \
+    sound.txt

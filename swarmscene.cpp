@@ -6,6 +6,7 @@
 #include <QXmlStreamReader>
 #include <QXmlStreamWriter>
 #include <QMessageBox>
+#include <vecmath.h>
 
 
 void SwarmScene::addSwarmItem()
@@ -18,7 +19,7 @@ void SwarmScene::addSwarmItem()
     qreal vx = ((qreal)rand()/RAND_MAX)*vmax-vmax/2;
     qreal vy = ((qreal)rand()/RAND_MAX)*vmax-vmax/2;
     SchwarmElem *schwarm = new SchwarmElem(x,y,vx,vy,schwarmAlgorithm);
-     addItem(schwarm);
+    addSwarmElem(schwarm);
 
     /*
     SchwarmElem *schwarm = new SchwarmElem(5,0,0.4,0.0,schwarmAlgorithm);
@@ -49,7 +50,7 @@ void SwarmScene::openFile(const QString &fileName)
             return;
     }
     QXmlStreamReader *xmlReader = new QXmlStreamReader(&xmlFile);
-    clear();
+    clearSwarm();
 
     //Parse the XML until we reach end of it
     double x,y,vx,vy;
@@ -83,7 +84,7 @@ void SwarmScene::openFile(const QString &fileName)
                          vy = value.toDouble();
                      }
                 }
-                addItem(new SchwarmElem(x,y,vx,vy,schwarmAlgorithm));
+                addSwarmElem(new SchwarmElem(x,y,vx,vy,schwarmAlgorithm));
              } else if(xmlReader->name() == "barrier") {
                 foreach(const QXmlStreamAttribute &attr, xmlReader->attributes()) {
                      if (attr.name().toString() == QLatin1String("x")) {
@@ -198,6 +199,43 @@ bool SwarmScene::saveFile(const QString &fileName)
     return true;
 }
 
+void SwarmScene::initSound(QObject *parent)
+{
+    if (!swarmSound) {
+        initSinTable();
+        swarmSound = new SwarmSound(parent);
+    }
+    foreach (QGraphicsItem *item, items()) {
+        SchwarmElem *schwarmElem = dynamic_cast<SchwarmElem*>(item);
+        if (schwarmElem) {
+            swarmSound->addAudioElemData(schwarmElem);
+        }
+    }
+}
+
+void SwarmScene::clearSwarm()
+{
+    clear();
+    if (swarmSound) {
+        swarmSound->resetSound();
+    }
+}
+
+void SwarmScene::suspend()
+{
+    if (swarmSound) {
+        swarmSound->suspend();
+    }
+}
+
+void SwarmScene::resume()
+{
+    if (swarmSound) {
+        swarmSound->resume();
+    }
+
+}
+
 void SwarmScene::mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent)
 {
     if (mouseEvent->button() == Qt::LeftButton) {
@@ -234,9 +272,17 @@ void SwarmScene::mouseReleaseEvent(QGraphicsSceneMouseEvent *mouseEvent)
                 vy = ((qreal)rand()/RAND_MAX)*vmax-vmax/2;
             }
             SchwarmElem *schwarm = new SchwarmElem(mousePressPosition.x(),mousePressPosition.y(),vx,vy,schwarmAlgorithm);
-            addItem(schwarm);
+            addSwarmElem(schwarm);
         }
         hasPressed = false;
     }
     QGraphicsScene::mouseReleaseEvent(mouseEvent);
+}
+
+void SwarmScene::addSwarmElem(SchwarmElem *schwarmElem)
+{
+    addItem(schwarmElem);
+    if (swarmSound) {
+        swarmSound->addAudioElemData(schwarmElem);
+    }
 }

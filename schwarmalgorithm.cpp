@@ -254,7 +254,9 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
                    if (nextDistance<optimalDistance) {
                        // korriegieren abstand zu klein
                        nearSchwarm.append({nextSchwarmElem,nextDistance});
-                       schwarmElem.mode = crowded;
+                       if (nextDistance<optimalDistance*.07) {
+                          schwarmElem.mode = crowded;
+                       }
                    } else if (absAngle<45 || (ownSpeed<normalSpeed*0.1 && vectorSpeed(nextSchwarmElem->vx,nextSchwarmElem->vy)>normalSpeed/2)) {
                        schwarmCount++;
                        farSchwarm.append({nextSchwarmElem,nextDistance});
@@ -428,7 +430,7 @@ void InteractSchwarmAlgorithm::adaptForBarriers(SchwarmElem &schwarmElem, const 
         qreal distance = pointDistance(schwarmElem.x(),schwarmElem.y(),elem->x(),elem->y());
         if (distance<minDistance) {
             //qreal gravity = 0.02*(optimalDistance-elem.distance)*(optimalDistance-elem.distance);
-            qreal gravity = 0.05*(minDistance-distance);
+            qreal gravity = 0.08*(minDistance-distance);
             qreal edx = schwarmElem.x()-elem->x();
             qreal edy = schwarmElem.y()-elem->y();
             setVectorLen(edx,edy,gravity);

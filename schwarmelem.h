@@ -6,6 +6,7 @@
 #include <QList>
 
 class SchwarmAlgorithm;
+class ElemAudioSource;
 
 enum ScharmElemMode {
     alone, swarm, crowded, annexation, see, collision, farswarm
@@ -29,7 +30,7 @@ protected:
     void advance(int step) override;
 };
 
-class SchwarmElem : public QGraphicsItem
+class SchwarmElem : public QGraphicsItem, public QObject
 {
 private:
     qreal vx;
@@ -55,6 +56,7 @@ public:
     friend class CurvingSchwarmAlgorithm;
     friend class InteractSchwarmAlgorithm;
     friend class SwarmScene;
+    friend class ElemAudioSource;
 protected:
     void advance(int step) override;
 };

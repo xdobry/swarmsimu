@@ -66,7 +66,11 @@ Item Collision
 - Item Collision (Mit gravity ist es nicht zu machen, weil sonst immer die Bewegung
   von Gegner weg wäre, vielleicht nicht so schlecht)
 
+##############################################################
+Offene Punkte
 
+Wenn in schwarm dann werden barriers schlecht ausgewichen. Diese müssen mehr wichtigkeit bekommen.
+Der Schwarm ist zu starke struktur. Nur kollision ist größer
 
 
 

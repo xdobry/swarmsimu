@@ -3,8 +3,8 @@
 
 #include <QGraphicsScene>
 #include "schwarmalgorithm.h"
+#include <swarmsound.h>
 
-//! [0]
 class SwarmScene : public QGraphicsScene
 {
     Q_OBJECT   
@@ -21,6 +21,11 @@ public:
     ScharmElemAddType getAddElemType();
     void openFile(const QString &fileName);
     bool saveFile(const QString &fileName);
+    SwarmSound *swarmSound = NULL;
+    void initSound(QObject *parent);
+    void clearSwarm();
+    void suspend();
+    void resume();
 
 protected:
     void mousePressEvent(QGraphicsSceneMouseEvent *mouseEvent) override;
@@ -28,10 +33,11 @@ protected:
 
 
 private:
+    void addSwarmElem(SchwarmElem *schwarmElem);
+
     QPointF mousePressPosition;
     bool hasPressed = false;
     ScharmElemAddType schwarmElemAddType;
-
 };
 
 #endif // SWARMSCENE_H

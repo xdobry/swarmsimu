@@ -73,17 +73,17 @@ Kollisionsvermeidung
 #############################
 Offene Punkte
 
-- zu weit funktioniert nicht (die beschleunigung reicht nicht aus, es finden keine Anschluss staat,
+- V zu weit funktioniert nicht (die beschleunigung reicht nicht aus, es finden keine Anschluss staat,
 es muss eine übergeschwindigkeit für die zeit des ankommen geben)
-- die Elemente kleben zu wenig
+- V die Elemente kleben zu wenig
   - Ein schwarm kann sich teilen wenn 2 Anführer bestehen. (oft entsteht eine Front, die Auseinander fällt, es müsste
       eine Präferez zu Hintereinanderreihen (Formation) bestehen)). Also Platzire sich rechst oder linke von Anführer)
   - Durch kollsionsvermeidung kann ein Schwar auseinanderfallen. Während der Kollisionsvermeidung (merke den Schwarm anführer und suche anschluss wenn möglich.
      Es sei den man ist immer noch in Schwarm
-- Anschluss soll besser klappen zu einem Schwarm
-  - Wenn mehrere Elemente in sicht die offensichtlich ein Schwarm sind, dann mit prio anschliessen wenn man kein schwarm sind
+- V Anschluss soll besser klappen zu einem Schwarm
+  - V Wenn mehrere Elemente in sicht die offensichtlich ein Schwarm sind, dann mit prio anschliessen wenn man kein schwarm sind
     (Prüfe mode von Elementen, ist schwarm) Ein Schwarm müsste wie Anziehungskraft wirken (Kann man es machen, auch mit mehreren Elementen)
-- Wenn steht dann irgendwo anfangen sich zu bewegen (der stehende hat keine Richtung, kann also nicht beschleunigen)
+- V Wenn steht dann irgendwo anfangen sich zu bewegen (der stehende hat keine Richtung, kann also nicht beschleunigen)
 -
 
 ##########################
@@ -91,7 +91,7 @@ Ideen
 
 - Bewege sich ein Eine Sphere (3D)
 - Unbewegliche Elemente die unbedingt ausgewichen werden müssen
-- Point of Interest
+- V Point of Interest
 - Predator
 - Spiel versuche durch Predators und Blöcke ein Schwarm durch eine öffnung zu führen, Es könnten Tiere sein
   (Spiele mit Touch)
@@ -103,15 +103,17 @@ GUI
 - V neue elemente durch klicken hinzufügen (klicken und ziehen, auch bei stopp)
 - introspection der elemente (wenn stopp dann was ist unter cursor)
 - V elemente entfernen
-- Flieg Feld automatisch auf die sceen größe setzen
-- Standard is unendlich
+- Flieg Feld automatisch auf die sceen größe setzen. Problematisch, man müsste den resize Event von QGraphicsView abfangen
+  vielleicht auch mit eigenen Event Filter, dann aktuelle größe in algorithm speichern, nur dieser interesiert sich dafür. (Den Rahmen muss man nicht setzen, ist
+  aber wichtig für Index, sonst würde immer das größte mögliche genommen, gerade für scrollen)
+- V Standard is unendlich
 - poi und barriers automatisch setzen, liquidieren (poi und barrier haben verschiedene stärken und größen
 - Bei Berührung vernichten
 - Schwarm als Punkte berechnen aber als Klumpen darstellen (So wie roco poko)
-- Optimale Geschwindigkeit Anpassen
-- Enfernung zwischen Punkten anpassen
+- V Optimale Geschwindigkeit Anpassen
+- V Enfernung zwischen Punkten anpassen
 - Poi Pulsiert und schwächelt (also es kann die Elemente loslasen)
-- Zustand Als Datei abspeichern (Menu Leiste?)
+- V Zustand Als Datei abspeichern (Menu Leiste?)
 - Elemente können unterschiedliche Größen haben (Es wäre dann unterschiedliche Masse)
 - Vollbild
 - Schwarzer Hintergrund oder bessere pastelfarbe.
@@ -148,6 +150,8 @@ opend
 3d
 
 reactphysics3d
+
+
 
 
 

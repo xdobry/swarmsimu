@@ -26,13 +26,20 @@ MainWindow::MainWindow(QWidget *parent) :
     timer = new QTimer(this);
     QObject::connect(timer, SIGNAL(timeout()), &scene, SLOT(advance()));
 
+    audioTimer = new QTimer(this);
+    //QObject::connect(audioTimer, SIGNAL(timeout()), this, SLOT(adaptAudio()));
+
     timer->start(1000 / framesProSecond);
+    audioTimer->start(500);
+
     isRuning = true;
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    delete timer;
+    delete audioTimer;
 }
 
 void MainWindow::openFile()
@@ -103,16 +110,18 @@ void MainWindow::on_btnStartStop_clicked()
         isRuning = false;
         timer->stop();
         ui->btnStartStop->setText("Start");
+        scene.suspend();
     } else {
         ui->btnStartStop->setText("Stop");
         isRuning = true;
         timer->start(1000/framesProSecond);
+        scene.resume();
     }
 }
 
 void MainWindow::on_btnClear_clicked()
 {
-    scene.clear();
+    scene.clearSwarm();
 }
 
 void MainWindow::on_chbSeeField_toggled(bool checked)
@@ -158,3 +167,16 @@ void MainWindow::params2gui()
     ui->spinSpeed->setValue(scene.schwarmAlgorithm.getSpeed());
 
 }
+
+void MainWindow::on_chbSound_toggled(bool checked)
+{
+    scene.initSound(this);
+    if (checked) {
+        // Start in separate thread (this will not work)
+        // scene.swarmSound->start();
+        scene.swarmSound->startSound();
+    } else {
+        scene.swarmSound->stopSound();
+    }
+}
+

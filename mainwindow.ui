@@ -73,6 +73,13 @@
          </widget>
         </item>
         <item>
+         <widget class="QCheckBox" name="chbSound">
+          <property name="text">
+           <string>Sound</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QSlider" name="horizontalSlider">
           <property name="maximumSize">
            <size>

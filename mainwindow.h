@@ -6,6 +6,7 @@
 #include "schwarmelem.h"
 #include "schwarmalgorithm.h"
 #include "swarmscene.h"
+#include "swarmsound.h"
 #include <list>
 
 namespace Ui {
@@ -53,6 +54,8 @@ private slots:
 
     void on_rdbBarrier_toggled(bool checked);
 
+    void on_chbSound_toggled(bool checked);
+
 private:
     void params2gui();
 
@@ -60,6 +63,7 @@ private:
     SwarmScene scene;
     int framesProSecond = 33;
     QTimer *timer;
+    QTimer *audioTimer;
     bool isRuning;
     QString savedFile;
 };

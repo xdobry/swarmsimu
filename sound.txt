@@ -1,0 +1,59 @@
+Erezeuge stimme von schwarm
+
+- Stereo berechne
+- Fequenc hängt ab von geschwindigkeit und bescheunigung
+- Amlitute hängt ab von anzahl und beschleunigung
+- Frequenz art hängt von Zustand
+
+- Sound wird langsamer ermittelt (nicht alle frames)
+-
+QAudioOutput
+http://www.qtforum.org/article/36606/solved-qaudiooutput-truncated-sinusoid-sound.html
+
+http://www.cplusplus.com/forum/general/109119/
+
+https://www.libsdl.org/license.php
+
+
+https://ccrma.stanford.edu/software/stk/
+generating sound sythezis
+
+http://drpetter.se/project_sfxr.html
+http://www.bfxr.net/
+
+
+#################################################
+
+
+1) Benutze QPointer
+2) V Stop
+3) V Audio bei laufender Simulation (man muss die Punkte nachholen)
+4) V Anfang - man muss langsam lauter werden (Einblendung)
+5) V Bei überschreitung von Left<->Right Wrap, Aus und Einblenden sonst knacken
+6) Besserer Mixer der auf Überläufe reagiert (man braucht limiter)
+7) Wir programmiert man einfachen LP Filter (Man kann mit Innertion versuchen, keine schnelle bewegungen) - durch glätten
+8) V Authomatisch Läusterke regeln (Anzahl der Elemente, relative Lautstärke). Compressor? Limiter?
+9) Es enstehen sehr viele Tieftone (Kann man sie herauffinden)
+10) Probiere sound programmierung mit einer anderer Umgebung. Vielleicht kommt man da schneller zu brauchbaren ergebnissen und
+   bekommt anregung. - SuperCollider
+11) Wie mache ich beschleunigung - Länge des Veränderungs Vektor. Beschleunigung durch eine neuen Frequence (z.B nächste oktava oder eine quinte)
+12) Soll man Zustand auch akustisch hervorheben. Rot nur wenn sehr sehr nah. Sonst grün
+13) V Änderung der Freqeunz auch langsam Einbauen (Slide)
+14) Bei Rot und Langsam - Rauschen
+15) Sinus Tabelle Herstellen etwa für 10Hz - dann wären es 4410 Elemente
+
+https://qtsource.wordpress.com/2011/09/12/multithreaded-audio-using-qaudiooutput/
+
+http://blog.debao.me/2013/08/how-to-use-qthread-in-the-right-way-part-1/
+
+#######################################
+Optimierung/Ticks
+
+- Wovon hängt es:
+ - Programmierung
+ - Belastung
+ - Zeit für sound erstellung
+   Länge für Read 16384 = ergibt 16384/(2*2*44100)*1000 ms = 92 ms - samples 4096
+   read buffer  35280  samples count  8820
+   Probleme ab etwa 50ms.
+- Parallelität (zeige aktuelles Thread)
