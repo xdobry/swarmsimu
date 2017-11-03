@@ -20,12 +20,15 @@ Functionality:
 # The Algorithm
 
 The algorithm was designed from scratch. Each element moves according the physical rules.
-Every element has own logic and operate only because of date it can collect from surrounding areas.
+Every element has own logic and operate only because of data it can collect from surrounding area.
 Elements have so called see field. The can see other elements and adapt their speed and movement direction.
-The elements movement are computed iterative
+The elements movement are computed iterative.
 
 # Sound Effects
 
 Each elements generate sinus stereo sound that depends on speed. Additionally the elements generates saw wave sound depending on stress.
 Stress is on the one side the status and the another is acceleration (difference in movement).
 
+# Developing
+
+The programm is written in C++ using Qt library. Use QtDesigner to compile it
