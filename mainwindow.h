@@ -63,7 +63,6 @@ private:
     SwarmScene scene;
     int framesProSecond = 33;
     QTimer *timer;
-    QTimer *audioTimer;
     bool isRuning;
     QString savedFile;
 };

@@ -2,6 +2,7 @@
 #define SCHWARMALGORITHM_H
 
 #include <QList>
+#include <list>
 
 class SchwarmElem;
 class BarrierElem;
@@ -67,9 +68,9 @@ public:
 
 private:
     qreal avoidBorder(SchwarmElem &schwarmElem, qreal crotation);
-    void adaptInSwarm(SchwarmElem &schwarmElem, double ownAngle, QList<NextSchwarmElem> &farSchwarm, const QList<NextSchwarmElem> &nearSchwarm);
-    void adaptForCollisions(SchwarmElem &schwarmElem,double ownAngle,const QList<CollisionSchwarmElem> &collisionSchwarm,int countOwnSchwarm);
-    void adaptForBarriers(SchwarmElem &schwarmElem,const QList<BarrierElem*> &barrierElems);
+    void adaptInSwarm(SchwarmElem &schwarmElem, double ownAngle, std::list<NextSchwarmElem> &farSchwarm, const std::list<NextSchwarmElem> &nearSchwarm);
+    void adaptForCollisions(SchwarmElem &schwarmElem,double ownAngle,const std::list<CollisionSchwarmElem> &collisionSchwarm,int countOwnSchwarm);
+    void adaptForBarriers(SchwarmElem &schwarmElem,const std::list<BarrierElem*> &barrierElems);
     void adaptForPois(SchwarmElem &schwarmElem);
     void moveElem(SchwarmElem &schwarmElemW);
     qreal getOptimalDistance();

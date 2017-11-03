@@ -7,6 +7,7 @@
 #include <QXmlStreamWriter>
 #include <QMessageBox>
 #include <vecmath.h>
+#include <iostream>
 
 
 void SwarmScene::addSwarmItem()
@@ -51,6 +52,7 @@ void SwarmScene::openFile(const QString &fileName)
     }
     QXmlStreamReader *xmlReader = new QXmlStreamReader(&xmlFile);
     clearSwarm();
+    suspend();
 
     //Parse the XML until we reach end of it
     double x,y,vx,vy;
@@ -137,6 +139,7 @@ void SwarmScene::openFile(const QString &fileName)
     //close reader and flush file
     xmlReader->clear();
     delete xmlReader;
+    resume();
     xmlFile.close();
 }
 
@@ -205,11 +208,25 @@ void SwarmScene::initSound(QObject *parent)
         initSinTable();
         swarmSound = new SwarmSound(parent);
     }
-    foreach (QGraphicsItem *item, items()) {
-        SchwarmElem *schwarmElem = dynamic_cast<SchwarmElem*>(item);
-        if (schwarmElem) {
-            swarmSound->addAudioElemData(schwarmElem);
+}
+
+void SwarmScene::startSound()
+{
+    if (swarmSound) {
+        foreach (QGraphicsItem *item, items()) {
+            SchwarmElem *schwarmElem = dynamic_cast<SchwarmElem*>(item);
+            if (schwarmElem) {
+                swarmSound->addAudioElemData(schwarmElem);
+            }
         }
+        swarmSound->startSound();
+    }
+}
+
+void SwarmScene::stopSound()
+{
+    if (swarmSound) {
+        swarmSound->stopSound();
     }
 }
 

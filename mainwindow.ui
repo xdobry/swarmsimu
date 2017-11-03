@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>MainWindow</string>
+   <string>Schwarm Simulation</string>
   </property>
   <property name="toolButtonStyle">
    <enum>Qt::ToolButtonTextOnly</enum>
@@ -68,7 +68,7 @@
         <item>
          <widget class="QCheckBox" name="chbSeeField">
           <property name="text">
-           <string>see field</string>
+           <string>show see field</string>
           </property>
          </widget>
         </item>
@@ -147,7 +147,7 @@
         <item>
          <widget class="QLabel" name="label">
           <property name="text">
-           <string>optimal distance</string>
+           <string>Optimal Distance</string>
           </property>
          </widget>
         </item>
@@ -186,9 +186,16 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_3">
         <item>
+         <widget class="QLabel" name="label_3">
+          <property name="text">
+           <string>Type of Element to Add per Click</string>
+          </property>
+         </widget>
+        </item>
+        <item>
          <widget class="QRadioButton" name="rdbElem">
           <property name="text">
-           <string>Elem</string>
+           <string>Swarm Elem</string>
           </property>
           <property name="checked">
            <bool>true</bool>

@@ -6,6 +6,8 @@
 #include <QRectF>
 #include <math.h>
 #include <algorithm>
+#include <QDebug>
+#include <list>
 
 static const double minColTime = 60;
 
@@ -228,10 +230,10 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
         int schwarmCount = 0;
         if (crotation==0 && nearItems.size()>1) {
             int countOwnSchwarm = 0;
-            QList<BarrierElem*> barrierElems;
-            QList<NextSchwarmElem> nearSchwarm;
-            QList<NextSchwarmElem> farSchwarm;
-            QList<CollisionSchwarmElem> collisions;
+            std::list<BarrierElem*> barrierElems;
+            std::list<NextSchwarmElem> nearSchwarm;
+            std::list<NextSchwarmElem> farSchwarm;
+            std::list<CollisionSchwarmElem> collisions;
             qreal ownAngle = getAngleDegress(schwarmElem.vx,schwarmElem.vy);
             qreal ownSpeed = vectorSpeed(schwarmElem.vx,schwarmElem.vy);
             foreach (QGraphicsItem *item, nearItems) {
@@ -253,13 +255,13 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
                    //qDebug("next pos x=%lf, y=%lf",nextSchwarmElem->x(),nextSchwarmElem->y());
                    if (nextDistance<optimalDistance) {
                        // korriegieren abstand zu klein
-                       nearSchwarm.append({nextSchwarmElem,nextDistance});
+                       nearSchwarm.push_back({nextSchwarmElem,nextDistance});
                        if (nextDistance<optimalDistance*.07) {
                           schwarmElem.mode = crowded;
                        }
                    } else if (absAngle<45 || (ownSpeed<normalSpeed*0.1 && vectorSpeed(nextSchwarmElem->vx,nextSchwarmElem->vy)>normalSpeed/2)) {
                        schwarmCount++;
-                       farSchwarm.append({nextSchwarmElem,nextDistance});
+                       farSchwarm.push_back({nextSchwarmElem,nextDistance});
                        if (schwarmElem.mode==see) {
                            schwarmElem.mode = swarm;
                        }
@@ -268,24 +270,30 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
                        // Ausweichen wenn nötig (Kollisionskurs)
                        CollisionData collisionData = schwarmElem.computeCollisionDistance(*nextSchwarmElem);
                        if (collisionData.distance>=0 && collisionData.distance<schwarmElem.spread()*3 && collisionData.time<=minColTime) {
-                           collisions.append({nextSchwarmElem,collisionData});
+                           collisions.push_back({nextSchwarmElem,collisionData});
                            schwarmElem.mode = collision;
                        }
                    }
                } else {
                    BarrierElem *nextBarrierElem = dynamic_cast<BarrierElem*>(item);
                    if (nextBarrierElem) {
-                       barrierElems.append(nextBarrierElem);
+                       barrierElems.push_back(nextBarrierElem);
                    }
                }
             }
             if (collisions.size()>0) {
+                //qDebug() << "adaptForCollisions";
                 adaptForCollisions(schwarmElem,ownAngle,collisions,countOwnSchwarm);
+                //qDebug()<<"adaptForCollisions end";
             } else if (nearSchwarm.size()>0 || farSchwarm.size()>0) {
+                //qDebug()<<"adaptInSwarm";
                 adaptInSwarm(schwarmElem,ownAngle,farSchwarm,nearSchwarm);
+                //qDebug()<<"adaptInSwarm End";
             }
             if (barrierElems.size()>0) {
+                //qDebug()<<"adaptForBarriers";
                 adaptForBarriers(schwarmElem,barrierElems);
+                //qDebug()<<"adaptForBarriers end";
             }
         }
         if (schwarmCount==0) {
@@ -299,12 +307,14 @@ void InteractSchwarmAlgorithm::advance(SchwarmElem &schwarmElem)
 
         }
     }
+    //qDebug()<<"point -1";
     if (schwarmElem.vrotation!=0) {
        rotateVector(schwarmElem.vx,schwarmElem.vy,schwarmElem.vrotation);
     }
     schwarmElem.setRotation(getAngleDegress(schwarmElem.vx,schwarmElem.vy));
     adaptForPois(schwarmElem);
     moveElem(schwarmElem);
+    //qDebug()<<"advande end";
 }
 
 void InteractSchwarmAlgorithm::moveElem(SchwarmElem &schwarmElem)
@@ -384,9 +394,10 @@ qreal InteractSchwarmAlgorithm::avoidBorder(SchwarmElem &schwarmElem, qreal crot
     return crotation;
 }
 
-void InteractSchwarmAlgorithm::adaptForCollisions(SchwarmElem &schwarmElem,double ownAngle,const QList<CollisionSchwarmElem> &collisionSchwarm,int countOwnSchwarm) {
+void InteractSchwarmAlgorithm::adaptForCollisions(SchwarmElem &schwarmElem,double ownAngle,const std::list<CollisionSchwarmElem> &collisionSchwarm,int countOwnSchwarm) {
     qreal time = -1;
-    CollisionSchwarmElem *nearestElem;
+    CollisionSchwarmElem *nearestElem = NULL;
+    //qDebug()<<"adaptForCollisions 1";
     // only correct to nearest element (the shortest time of collision)
     // wenn durch korrektur immer noch collision und nah dann abbremsen
     foreach (CollisionSchwarmElem elem, collisionSchwarm) {
@@ -418,9 +429,10 @@ void InteractSchwarmAlgorithm::adaptForCollisions(SchwarmElem &schwarmElem,doubl
             addVectorLen(schwarmElem.vx,schwarmElem.vy,-acceleration);
         }
     }
+    //qDebug()<<"adaptForCollisions end";
 }
 
-void InteractSchwarmAlgorithm::adaptForBarriers(SchwarmElem &schwarmElem, const QList<BarrierElem*> &barrierElems)
+void InteractSchwarmAlgorithm::adaptForBarriers(SchwarmElem &schwarmElem, const std::list<BarrierElem*> &barrierElems)
 {
     qreal dx = 0;
     qreal dy = 0;
@@ -494,7 +506,7 @@ bool nextScharmElemLess(const NextSchwarmElem &next1,const NextSchwarmElem &next
     return next1.distance<next2.distance;
 }
 
-void InteractSchwarmAlgorithm::adaptInSwarm(SchwarmElem &schwarmElem,double ownAngle,QList<NextSchwarmElem> &farSchwarm,const QList<NextSchwarmElem> &nearSchwarm) {
+void InteractSchwarmAlgorithm::adaptInSwarm(SchwarmElem &schwarmElem,double ownAngle,std::list<NextSchwarmElem> &farSchwarm,const std::list<NextSchwarmElem> &nearSchwarm) {
     qreal dx = 0;
     qreal dy = 0;
     int swarmCount = 0;
@@ -515,7 +527,8 @@ void InteractSchwarmAlgorithm::adaptInSwarm(SchwarmElem &schwarmElem,double ownA
             sy+=elem.schwarmElem->vy;
         }
     }
-    std::sort(farSchwarm.begin(),farSchwarm.end(),nextScharmElemLess);
+    farSchwarm.sort(nextScharmElemLess);
+    //std::sort(farSchwarm.begin(),farSchwarm.end(),nextScharmElemLess);
     qreal firstDistance = -1;
     foreach (NextSchwarmElem elem, farSchwarm) {
         if (firstDistance>0 && elem.distance+optimalDistance>firstDistance) {

@@ -14,15 +14,18 @@
 #include <math.h>
 #include <iostream>
 #include <random>
+#include <list>
 
 #include <schwarmelem.h>
 
 void initSinTable();
 
+typedef float areal;
+
 class ElemAudioSource {
 public:
     ElemAudioSource(SchwarmElem *schwarmElemPar): schwarmElem(schwarmElemPar) {}
-    void readData(qreal *ldata,qreal *rdata, qint64 len,qreal level);
+    void readData(areal *ldata,areal *rdata, qint64 len,areal level);
     bool isValid();
 
 private:
@@ -61,9 +64,9 @@ public:
     qint64 bytesAvailable() const override;
     void addAudioElemData(SchwarmElem *schwarmElem);
     void resetElements();
-
+    void generateData();  
+    void generateDataPtr(unsigned char *prt, int length);
 private:
-    void generateData();
 
 
 private:
@@ -72,8 +75,11 @@ private:
     QByteArray m_buffer;
     QByteArray mixleft_buffer;
     QByteArray mixright_buffer;
-    QList<ElemAudioSource *> audioSources;
+    std::list<ElemAudioSource *> audioSources;
     qint64 maxElapsedTime = 0;
+    int timeReport = 0;
+    qreal slowAudio = 0;
+    qreal slowAudioDiff = 1.0/44100;
 };
 
 struct AudioElemData {
@@ -101,6 +107,7 @@ protected:
 private:
     QAudioOutput* _audio;
     Generator *m_generator;
+    void speedTests();
 };
 
 #endif // SWARMSOUND_H

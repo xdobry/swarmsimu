@@ -1,46 +1,53 @@
 #include "swarmsound.h"
 #include <qendian.h>
+// only speed test
+#include "swarmscene.h"
 
 #include <vecmath.h>
 
 #include <QElapsedTimer>
 
-const int DurationMSec = 100;
+const int DurationMSec = 200;
 
 std::default_random_engine generator;
 std::normal_distribution<double> distribution(0.0,2.0);
 
-qreal *sinTable = NULL;
-qreal *sawTable = NULL;
+
+
+areal *sinTable = NULL;
+areal *sawTable = NULL;
 const int sampleRate = 44100;
 const int sinTableSize = sampleRate/10;
 
 void initSinTable() {
     if (!sinTable) {
-        sinTable = new qreal[sinTableSize];
+        sinTable = new areal[sinTableSize];
         for (int i = 0;i<sinTableSize;i++) {
-            sinTable[i] = sin((qreal)i*(2.0*M_PI)/(qreal)sinTableSize);
+            sinTable[i] = sin((areal)i*(2.0*M_PI)/(areal)sinTableSize);
         }
     }
     if (!sawTable) {
-        sawTable = new qreal[sinTableSize];
+        sawTable = new areal[sinTableSize];
         for (int i = 0;i<sinTableSize;i++) {
-            sawTable[i] = -2.0*(qreal)i/(qreal)sinTableSize+0.5;
+            sawTable[i] = -2.0*(areal)i/(areal)sinTableSize+0.5;
         }
     }
 }
 
-qreal sinFromTable(qreal x) {
+areal sinFromTable(areal x) {
     if (sinTable) {
-        return sinTable[((qint64)(x*(qreal)sinTableSize/(2.0*M_PI)))%sinTableSize];
+        int tpos = (int)(x*(areal)sinTableSize/(2.0*M_PI))%sinTableSize;
+        return sinTable[tpos];
+        //return sinTable[((qint64)(x*(double)sinTableSize/(2.0*M_PI)))%sinTableSize];
     } else {
         return sin(x);
     }
 }
 
-qreal sawFromTable(qreal x) {
+areal sawFromTable(areal x) {
     if (sawTable) {
-        return sawTable[((qint64)(x*(qreal)sinTableSize/(2.0*M_PI)))%sinTableSize];
+        int tpos = (int)(x*(areal)sinTableSize/(2.0*M_PI))%sinTableSize;
+        return sawTable[tpos];
     } else {
         return 0;
     }
@@ -79,12 +86,71 @@ void SwarmSound::startSound()
 {
     m_generator->start();
     _audio->start(m_generator);
+    // speedTests();
+}
+
+void SwarmSound::speedTests() {
+    QElapsedTimer timer;
+    areal ownFrequency = (50.0+ 390.0 * 0.2);
+    areal cdelta = 2.0 * M_PI * ownFrequency / 44100.0;
+    areal pos = 0.0;
+    int samplesCount = 441000;
+    QByteArray buffer;
+    buffer.resize(samplesCount*sizeof(areal));
+    buffer.fill(0);
+    areal *mix = reinterpret_cast<areal *>(buffer.data());
+    timer.start();
+    for (int i=0;i<samplesCount;i++) {
+        areal value = sinFromTable(pos);
+        *mix += value;
+        mix++;
+        pos+=cdelta;
+    }
+    qDebug() << "1 sec from table: " << timer.elapsed() << "milliseconds";
+    mix = reinterpret_cast<areal *>(buffer.data());
+    timer.restart();
+    pos = 0.0;
+    for (int i=0;i<samplesCount;i++) {
+        areal value = sin(pos);
+        *mix += value;
+        mix++;
+        pos+=cdelta;
+
+    }
+    qDebug() << "1 sec from function: " << timer.elapsed() << "milliseconds";
+    QAudioFormat format;
+    format.setSampleRate(sampleRate);
+    format.setChannelCount(2);
+    format.setSampleSize(16);
+    format.setCodec("audio/pcm");
+    format.setByteOrder(QAudioFormat::LittleEndian);
+    format.setSampleType(QAudioFormat::SignedInt);
+    Generator generator(format,DurationMSec,this);
+    InteractSchwarmAlgorithm schwarmAlgorithm = InteractSchwarmAlgorithm(15,0.05);
+    QList<SchwarmElem *> elems;
+    int count = 50;
+    for  (int i = 0;i<20;i++) {
+        SchwarmElem *s1 = new SchwarmElem(0,0,2,2,schwarmAlgorithm);
+        elems.append(s1);
+        generator.addAudioElemData(s1);
+    }
+    timer.restart();
+    generator.generateData();
+    generator.generateData();
+    generator.generateData();
+    generator.generateData();
+    generator.generateData();
+    qDebug() << "generator call " << timer.elapsed() << "milliseconds by count: "<<count;
+    foreach (SchwarmElem *elem, elems) {
+        delete elem;
+    }
 }
 
 void SwarmSound::stopSound()
 {
-    m_generator->stop();
     _audio->stop();
+    m_generator->stop();
+    m_generator->resetElements();
 }
 
 void SwarmSound::resetSound()
@@ -126,8 +192,8 @@ Generator::Generator(const QAudioFormat &formatp,
         Q_UNUSED(sampleBytes) // suppress warning in release builds
         qDebug()<<"read buffer "<<length << " samples count "<<samplesCount;
         m_buffer.resize(length);
-        mixright_buffer.resize(samplesCount*sizeof(qreal));
-        mixleft_buffer.resize(samplesCount*sizeof(qreal));
+        mixright_buffer.resize(samplesCount*sizeof(areal));
+        mixleft_buffer.resize(samplesCount*sizeof(areal));
         //generateData();
     }
 }
@@ -148,21 +214,36 @@ void Generator::stop()
     close();
 }
 
-void Generator::generateData()
+void Generator::generateData() {
+    unsigned char *ptr = reinterpret_cast<unsigned char *>(m_buffer.data());
+    int length = samplesCount * 2 * 2;
+    generateDataPtr(ptr,length);
+}
+
+
+void Generator::generateDataPtr(unsigned char *ptr, int length)
 {
     const int channelBytes = 2;
-    qint64 length = samplesCount * 2 * 2;
-    unsigned char *ptr = reinterpret_cast<unsigned char *>(m_buffer.data());
+    samplesCount = length/4;
+
+    int needBufferLen = samplesCount*sizeof(areal);
+    if (mixleft_buffer.size()<needBufferLen) {
+        mixleft_buffer.resize(needBufferLen);
+    }
+    if (mixright_buffer.size()<needBufferLen) {
+        mixright_buffer.resize(needBufferLen);
+    }
 
     mixleft_buffer.fill(0);
     mixright_buffer.fill(0);
 
-    qreal *leftmix = reinterpret_cast<qreal *>(mixleft_buffer.data());
-    qreal *rightmix = reinterpret_cast<qreal *>(mixright_buffer.data());
+    areal *leftmix = reinterpret_cast<areal *>(mixleft_buffer.data());
+    areal *rightmix = reinterpret_cast<areal *>(mixright_buffer.data());
 
-    if (audioSources.length()>0) {
-        int maxaudio = 5;
-        qreal level = 1.0/qreal(qMin(maxaudio,audioSources.length())); // *log(audioSources.length()+1);
+    int audioSourcesLenght = audioSources.size();
+    if (audioSourcesLenght>0) {
+        int maxaudio = 200;
+        areal level = 1.0/qreal(qMin(maxaudio,audioSourcesLenght)); // *log(audioSources.length()+1);
         int elemCount = 0;
         foreach (ElemAudioSource *elemAudioSource , audioSources) {
            if (elemAudioSource->isValid()) {
@@ -175,12 +256,20 @@ void Generator::generateData()
         }
         while (length>0) {
             // const qreal x = sin(2 * M_PI * sampleRate * qreal(sampleIndex % format.sampleRate()) / format.sampleRate());
-            qreal qvalue = (*leftmix++);
+            areal qvalue = (*leftmix++);
             if (qvalue>1.0) {
                 qvalue=1.0;
             } else if (qvalue<-1.0) {
                 qvalue = -1.0;
             }
+            /*
+            slowAudio += slowAudioDiff;
+            if (slowAudio>1.0 || slowAudio<0.0) {
+                slowAudioDiff = -slowAudioDiff;
+            }
+            qvalue *= slowAudio;
+            */
+
             qint16 value = static_cast<qint16>(qvalue * 32767);
             qToLittleEndian<qint16>(value, ptr);
             ptr += channelBytes;
@@ -194,19 +283,21 @@ void Generator::generateData()
             } else if (qvalue<-1.0) {
                 qvalue = -1.0;
             }
+            // qvalue *= slowAudio;
+
             value = static_cast<qint16>(qvalue * 32767);
             qToLittleEndian<qint16>(value, ptr);
             ptr += channelBytes;
             length -= channelBytes;
         }
     } else {
-        m_buffer.fill(0);
+        memset(ptr,0,length);
     }
 }
 
 void Generator::addAudioElemData(SchwarmElem *schwarmElem)
 {
-    audioSources.append(new ElemAudioSource(schwarmElem));
+    audioSources.push_back(new ElemAudioSource(schwarmElem));
 }
 
 void Generator::resetElements()
@@ -219,7 +310,21 @@ void Generator::resetElements()
 
 qint64 Generator::readData(char *data, qint64 len)
 {
+    QElapsedTimer timer;
+    timer.start();
+    generateDataPtr((unsigned char *)data,len);
+    qint64 timeElapsed = timer.elapsed();
+    timeReport++;
+    if (timeReport>50) {
+        maxElapsedTime = 0;
+    }
+    if (timeElapsed>maxElapsedTime) {
+        qDebug() << "audio data processing took" << timeElapsed << "milliseconds" << " len: "<< len << " elem count: "<<audioSources.size();
+        maxElapsedTime = timeElapsed;
+        timeReport = 0;
+    }
     //qDebug()<<"readdata len:"<<len;
+    /*
     qint64 total = 0;
     if (!m_buffer.isEmpty()) {
         while (len - total > 0) {
@@ -231,18 +336,24 @@ qint64 Generator::readData(char *data, qint64 len)
                 QElapsedTimer timer;
                 timer.start();
                 generateData();
+                // QThread::msleep(50);
                 qint64 timeElapsed = timer.elapsed();
+                timeReport++;
+                if (timeReport>50) {
+                    maxElapsedTime = 0;
+                }
                 if (timeElapsed>maxElapsedTime) {
-                    qDebug() << "The slow operation took" << timer.elapsed() << "milliseconds" << " len: "<< len;
+                    qDebug() << "The slow operation took" << timeElapsed << "milliseconds" << " len: "<< len << " elem count: "<<audioSources.length();
                     maxElapsedTime = timeElapsed;
+                    timeReport = 0;
                 }
                 // break;
             }
             total += chunk;
         }
     }
-
-    return total;
+    */
+    return len;
 }
 
 qint64 Generator::writeData(const char *data, qint64 len)
@@ -258,16 +369,16 @@ qint64 Generator::bytesAvailable() const
     return m_buffer.size() + QIODevice::bytesAvailable();
 }
 
-void ElemAudioSource::readData(qreal *ldata, qreal *rdata, qint64 len,qreal level)
+void ElemAudioSource::readData(areal *ldata, areal *rdata, qint64 len,areal level)
 {
-    qreal rlevel = 0;
-    qreal llevel = 0;
-    qreal rlevel2 = 0;
-    qreal llevel2 = 0;
+    areal rlevel = 0;
+    areal llevel = 0;
+    areal rlevel2 = 0;
+    areal llevel2 = 0;
     // TODO scene width
 
-    qreal sceneWidth = 500;
-    qreal audioLevel = 0.2 * level;
+    areal sceneWidth = 500;
+    areal audioLevel = 0.2 * level;
 
     int stressPoints = 0;
     if (schwarmElem->mode==crowded) {
@@ -276,14 +387,14 @@ void ElemAudioSource::readData(qreal *ldata, qreal *rdata, qint64 len,qreal leve
     if (schwarmElem->mode==collision) {
         stressPoints+=2;
     }
-    qreal accStress = 0.0;
+    areal accStress = 0.0;
     if (anglePos>0.0) {
         accStress = vectorSpeed(oldvx-schwarmElem->vx,oldvy-schwarmElem->vy);
     }
     oldvx = schwarmElem->vx;
     oldvy = schwarmElem->vy;
 
-    qreal stressAudioLevel = level * 0.1 * stressPoints + accStress*0.02;
+    areal stressAudioLevel = level * 0.1 * stressPoints + accStress*0.02;
 
     rlevel = (schwarmElem->x()+sceneWidth)/1000.0*audioLevel;
     llevel = (sceneWidth-schwarmElem->x())/1000.0*audioLevel;
@@ -298,22 +409,22 @@ void ElemAudioSource::readData(qreal *ldata, qreal *rdata, qint64 len,qreal leve
     qreal pos = anglePos;
     if (pos<0) {
         // Set init position to random
-        pos = ((qreal)rand()/RAND_MAX)*2.0 * M_PI;
+        pos = ((areal)rand()/RAND_MAX)*2.0 * M_PI;
         ownDeviation = distribution(generator);
     }
-    qreal ownFrequency = (50.0+ 390.0 * rSpeed + ownDeviation);
-    qreal cdelta = 2.0 * M_PI * ownFrequency / 44100.0;
+    areal ownFrequency = (50.0+ 390.0 * rSpeed + ownDeviation);
+    areal cdelta = 2.0 * M_PI * ownFrequency / 44100.0;
 
-    qreal sinvalue = 0;
+    areal sinvalue = 0;
 
     // The volumume differency will be distributed for 1/2 of length
     int halbLen = len/2;
-    qreal crlevel = rvelocity;
-    qreal cllevel = lvelocity;
-    qreal rdelta = (rlevel-rvelocity)/qreal(halbLen);
-    qreal ldelta = (llevel-lvelocity)/qreal(halbLen);
-    qreal sdelta;
-    qreal ddelta;
+    areal crlevel = rvelocity;
+    areal cllevel = lvelocity;
+    areal rdelta = (rlevel-rvelocity)/qreal(halbLen);
+    areal ldelta = (llevel-lvelocity)/qreal(halbLen);
+    areal sdelta;
+    areal ddelta;
     // The frequency differency will be distributed to full length
     if (delta>0) {
         sdelta = delta;
@@ -325,25 +436,25 @@ void ElemAudioSource::readData(qreal *ldata, qreal *rdata, qint64 len,qreal leve
 
     // Wiederholung für Stress Ton (säge)
     // 1.5 entspricht der quite C auf G
-    qreal sawvalue = 0;
-    qreal cdelta2 = 2.0 * M_PI * ownFrequency * 1.5 / 44100.0;
+    areal sawvalue = 0;
+    areal cdelta2 = 2.0 * M_PI * ownFrequency * 1.5 / 44100.0;
 
-    qreal pos2 = anglePos2;
+    areal pos2 = anglePos2;
     if (pos2<0) {
         // Set init position to random
         pos2 = ((qreal)rand()/RAND_MAX)*2.0 * M_PI;
     }
 
-    qreal crlevel2 = rvelocity2;
-    qreal cllevel2 = lvelocity2;
-    qreal rdelta2 = (rlevel2-rvelocity2)/qreal(halbLen);
-    qreal ldelta2 = (llevel2-lvelocity2)/qreal(halbLen);
-    qreal sdelta2;
-    qreal ddelta2;
+    areal crlevel2 = rvelocity2;
+    areal cllevel2 = lvelocity2;
+    areal rdelta2 = (rlevel2-rvelocity2)/qreal(halbLen);
+    areal ldelta2 = (llevel2-lvelocity2)/qreal(halbLen);
+    areal sdelta2;
+    areal ddelta2;
     // The frequency differency will be distributed to full length
     if (delta2>0) {
         sdelta2 = delta2;
-        ddelta2 = (cdelta2-delta2)/qreal(len);
+        ddelta2 = (cdelta2-delta2)/areal(len);
     } else {
         sdelta2 = cdelta;
         ddelta2 = 0;
@@ -382,8 +493,8 @@ void ElemAudioSource::readData(qreal *ldata, qreal *rdata, qint64 len,qreal leve
             cllevel2 += ldelta2;
         }
     }
-    anglePos = fmod(pos,qreal(2.0 * M_PI));
-    anglePos2 = fmod(pos2,qreal(2.0 * M_PI));
+    anglePos = fmod(pos,areal(2.0 * M_PI));
+    anglePos2 = fmod(pos2,areal(2.0 * M_PI));
     // anglePos = pos;
     rvelocity = crlevel;
     lvelocity = cllevel;

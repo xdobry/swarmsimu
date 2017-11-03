@@ -57,3 +57,20 @@ Optimierung/Ticks
    read buffer  35280  samples count  8820
    Probleme ab etwa 50ms.
 - Parallelität (zeige aktuelles Thread)
+
+Lösung
+- erstelle die Audio daten nicht als read sondern parallel in getrennten thread
+- read liest nur die Daten
+- Probleme
+ - Der Buffer kann nicht in read initialisiert werden
+ - Wer ist zu schnell wer muss warten
+ -
+ 10 Sekunden dauert 16 ms.
+ 44100*10*10000/16 = 27.562.500 sek = 13 M/sek
+
+Brauche:
+044100 = 0.04411 M/s
+
+Theoretisch = 13/0.0411 = 316 Elemente
+
+

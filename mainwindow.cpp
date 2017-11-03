@@ -22,31 +22,30 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->graphicsView->show();
 
     params2gui();
+    ui->statusBar->showMessage("left click and drag (for speed vector) to add swarm element. Right click to remove");
 
     timer = new QTimer(this);
     QObject::connect(timer, SIGNAL(timeout()), &scene, SLOT(advance()));
-
-    audioTimer = new QTimer(this);
-    //QObject::connect(audioTimer, SIGNAL(timeout()), this, SLOT(adaptAudio()));
-
     timer->start(1000 / framesProSecond);
-    audioTimer->start(500);
 
     isRuning = true;
 }
 
 MainWindow::~MainWindow()
 {
+    timer->stop();
+    scene.stopSound();
     delete ui;
     delete timer;
-    delete audioTimer;
 }
 
 void MainWindow::openFile()
 {
     QString fileName = QFileDialog::getOpenFileName(this,"Open Swarm File", "/home/jana", "Swarm File (*.xml)");
     if (!fileName.isNull()) {
+        timer->stop();
         scene.openFile(fileName);
+        timer->start();
         params2gui();
     }
 }
@@ -174,9 +173,9 @@ void MainWindow::on_chbSound_toggled(bool checked)
     if (checked) {
         // Start in separate thread (this will not work)
         // scene.swarmSound->start();
-        scene.swarmSound->startSound();
+        scene.startSound();
     } else {
-        scene.swarmSound->stopSound();
+        scene.stopSound();
     }
 }
 

@@ -23,6 +23,8 @@ public:
     bool saveFile(const QString &fileName);
     SwarmSound *swarmSound = NULL;
     void initSound(QObject *parent);
+    void startSound();
+    void stopSound();
     void clearSwarm();
     void suspend();
     void resume();
