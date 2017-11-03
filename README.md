@@ -1,5 +1,9 @@
 Visual swarm simulation with unique audio effects programmed with C++ and Qt.
 
+See youtube screen cast
+https://youtu.be/SRziCX3io6U
+
+
 It is my fun and learn project. I wanted to simulate the movement or behavior of birds or fished in swarm.
 I have created it to refresh my C++ skills and learn the Qt programming.
 Anyway the program is usable and it is fun to play with it. My kids love to play with.
